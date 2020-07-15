@@ -45,7 +45,7 @@ func setup(c *caddy.Controller) error {
 // OnStartup starts a goroutines for all proxies.
 func (f *Forward) OnStartup() (err error) {
 	for _, p := range f.proxies {
-		p.start(f.hcInterval)
+		p.start(f.ProbeTimeout)
 	}
 	return nil
 }
@@ -114,16 +114,16 @@ func parseStanza(c *caddy.Controller) (*Forward, error) {
 		}
 	}
 
-	if f.tlsServerName != "" {
-		f.tlsConfig.ServerName = f.tlsServerName
+	if f.TLSServerName != "" {
+		f.TLSConfig.ServerName = f.TLSServerName
 	}
 	for i := range f.proxies {
 		// Only set this for proxies that need it.
 		if transports[i] == transport.TLS {
-			f.proxies[i].SetTLSConfig(f.tlsConfig)
+			f.proxies[i].SetTLSConfig(f.TLSConfig)
 		}
-		f.proxies[i].SetExpire(f.expire)
-		f.proxies[i].health.SetRecursionDesired(f.opts.hcRecursionDesired)
+		f.proxies[i].SetExpire(f.ExpireTimeout)
+		f.proxies[i].SetRecursionDesired(f.opts.hcRecursionDesired)
 	}
 
 	return f, nil
@@ -139,7 +139,7 @@ func parseBlock(c *caddy.Controller, f *Forward) error {
 		for i := 0; i < len(ignore); i++ {
 			ignore[i] = plugin.Host(ignore[i]).Normalize()
 		}
-		f.ignored = ignore
+		f.Ignored = ignore
 	case "max_fails":
 		if !c.NextArg() {
 			return c.ArgErr()
@@ -151,7 +151,7 @@ func parseBlock(c *caddy.Controller, f *Forward) error {
 		if n < 0 {
 			return fmt.Errorf("max_fails can't be negative: %d", n)
 		}
-		f.maxfails = uint32(n)
+		f.MaxFails = uint32(n)
 	case "health_check":
 		if !c.NextArg() {
 			return c.ArgErr()
@@ -163,7 +163,7 @@ func parseBlock(c *caddy.Controller, f *Forward) error {
 		if dur < 0 {
 			return fmt.Errorf("health_check can't be negative: %d", dur)
 		}
-		f.hcInterval = dur
+		f.ProbeTimeout = dur
 
 		for c.NextArg() {
 			switch hcOpts := c.Val(); hcOpts {
@@ -194,12 +194,12 @@ func parseBlock(c *caddy.Controller, f *Forward) error {
 		if err != nil {
 			return err
 		}
-		f.tlsConfig = tlsConfig
+		f.TLSConfig = tlsConfig
 	case "tls_servername":
 		if !c.NextArg() {
 			return c.ArgErr()
 		}
-		f.tlsServerName = c.Val()
+		f.TLSServerName = c.Val()
 	case "expire":
 		if !c.NextArg() {
 			return c.ArgErr()
@@ -211,18 +211,18 @@ func parseBlock(c *caddy.Controller, f *Forward) error {
 		if dur < 0 {
 			return fmt.Errorf("expire can't be negative: %s", dur)
 		}
-		f.expire = dur
+		f.ExpireTimeout = dur
 	case "policy":
 		if !c.NextArg() {
 			return c.ArgErr()
 		}
 		switch x := c.Val(); x {
 		case "random":
-			f.p = &random{}
+			f.Policy = new(RandomPolicy)
 		case "round_robin":
-			f.p = &roundRobin{}
+			f.Policy = new(RoundRobinPolicy)
 		case "sequential":
-			f.p = &sequential{}
+			f.Policy = new(SequentialPolicy)
 		default:
 			return c.Errf("unknown policy '%s'", x)
 		}

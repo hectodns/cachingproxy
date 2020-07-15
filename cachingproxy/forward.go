@@ -27,18 +27,19 @@ var log = clog.NewWithPlugin("forward")
 type Forward struct {
 	concurrent int64 // atomic counters need to be first in struct for proper alignment
 
-	proxies    []*Proxy
-	p          Policy
-	hcInterval time.Duration
+	proxies      []*Proxy
+	Policy       Policy
+	ProbeTimeout time.Duration
 
 	from    string
-	ignored []string
+	Ignored []string
 
-	tlsConfig     *tls.Config
-	tlsServerName string
-	maxfails      uint32
-	expire        time.Duration
+	TLSConfig     *tls.Config
+	TLSServerName string
+
+	MaxFails      uint32
 	MaxConcurrent int64
+	ExpireTimeout time.Duration
 
 	opts options // also here for testing
 
@@ -51,20 +52,31 @@ type Forward struct {
 
 // New returns a new Forward.
 func New() *Forward {
-	f := &Forward{maxfails: 2, tlsConfig: new(tls.Config), expire: defaultExpire, p: new(random), from: ".", hcInterval: hcInterval, opts: options{forceTCP: false, preferUDP: false, hcRecursionDesired: true}}
+	f := &Forward{
+		TLSConfig:     new(tls.Config),
+		MaxFails:      2,
+		ProbeTimeout:  hcInterval,
+		ExpireTimeout: defaultExpire,
+		Policy:        new(RandomPolicy),
+		from:          ".",
+		opts: options{
+			forceTCP:           false,
+			preferUDP:          false,
+			hcRecursionDesired: true,
+		},
+	}
 	return f
 }
 
 // SetProxy appends p to the proxy list and starts healthchecking.
 func (f *Forward) SetProxy(p *Proxy) {
 	f.proxies = append(f.proxies, p)
-	p.start(f.hcInterval)
+	p.start(f.ProbeTimeout)
 }
 
 // Len returns the number of configured proxies.
 func (f *Forward) Len() int { return len(f.proxies) }
 
-// Name implements plugin.Handler.
 func (f *Forward) Name() string { return "forward" }
 
 // ServeDNS implements plugin.Handler.
@@ -101,14 +113,14 @@ func (f *Forward) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 
 		proxy := list[i]
 		i++
-		if proxy.Down(f.maxfails) {
+		if proxy.Down(f.MaxFails) {
 			fails++
 			if fails < len(f.proxies) {
 				continue
 			}
 			// All upstream proxies are dead, assume healthcheck is completely broken and randomly
 			// select an upstream to connect to.
-			r := new(random)
+			r := new(RandomPolicy)
 			proxy = r.List(f.proxies)[0]
 
 			HealthcheckBrokenCount.Add(1)
@@ -146,7 +158,7 @@ func (f *Forward) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 
 		if err != nil {
 			// Kick off health check to see if *our* upstream is broken.
-			if f.maxfails != 0 {
+			if f.MaxFails != 0 {
 				proxy.Healthcheck()
 			}
 
@@ -190,7 +202,7 @@ func (f *Forward) isAllowedDomain(name string) bool {
 		return true
 	}
 
-	for _, ignore := range f.ignored {
+	for _, ignore := range f.Ignored {
 		if plugin.Name(ignore).Matches(name) {
 			return false
 		}
@@ -205,7 +217,7 @@ func (f *Forward) ForceTCP() bool { return f.opts.forceTCP }
 func (f *Forward) PreferUDP() bool { return f.opts.preferUDP }
 
 // List returns a set of proxies to be used for this client depending on the policy in f.
-func (f *Forward) List() []*Proxy { return f.p.List(f.proxies) }
+func (f *Forward) List() []*Proxy { return f.Policy.List(f.proxies) }
 
 var (
 	// ErrNoHealthy means no healthy proxies left.

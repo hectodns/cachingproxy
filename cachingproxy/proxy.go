@@ -43,6 +43,8 @@ func (p *Proxy) SetTLSConfig(cfg *tls.Config) {
 // SetExpire sets the expire duration in the lower p.transport.
 func (p *Proxy) SetExpire(expire time.Duration) { p.transport.SetExpire(expire) }
 
+func (p *Proxy) SetRecursionDesired(v bool) { p.health.SetRecursionDesired(v) }
+
 // Healthcheck kicks of a round of health checks for this proxy.
 func (p *Proxy) Healthcheck() {
 	if p.health == nil {

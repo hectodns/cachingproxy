@@ -7,7 +7,7 @@ import (
 func TestList(t *testing.T) {
 	f := Forward{
 		proxies: []*Proxy{{addr: "1.1.1.1:53"}, {addr: "2.2.2.2:53"}, {addr: "3.3.3.3:53"}},
-		p:       &roundRobin{},
+		Policy:  new(RoundRobinPolicy),
 	}
 
 	expect := []*Proxy{{addr: "2.2.2.2:53"}, {addr: "1.1.1.1:53"}, {addr: "3.3.3.3:53"}}

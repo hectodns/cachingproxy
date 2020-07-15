@@ -62,12 +62,12 @@ func TestSetup(t *testing.T) {
 			t.Errorf("Test %d: expected: %s, got: %s", i, test.expectedFrom, f.from)
 		}
 		if !test.shouldErr && test.expectedIgnored != nil {
-			if !reflect.DeepEqual(f.ignored, test.expectedIgnored) {
-				t.Errorf("Test %d: expected: %q, actual: %q", i, test.expectedIgnored, f.ignored)
+			if !reflect.DeepEqual(f.Ignored, test.expectedIgnored) {
+				t.Errorf("Test %d: expected: %q, actual: %q", i, test.expectedIgnored, f.Ignored)
 			}
 		}
-		if !test.shouldErr && f.maxfails != test.expectedFails {
-			t.Errorf("Test %d: expected: %d, got: %d", i, test.expectedFails, f.maxfails)
+		if !test.shouldErr && f.MaxFails != test.expectedFails {
+			t.Errorf("Test %d: expected: %d, got: %d", i, test.expectedFails, f.MaxFails)
 		}
 		if !test.shouldErr && f.opts != test.expectedOpts {
 			t.Errorf("Test %d: expected: %v, got: %v", i, test.expectedOpts, f.opts)
@@ -113,8 +113,8 @@ func TestSetupTLS(t *testing.T) {
 			}
 		}
 
-		if !test.shouldErr && test.expectedServerName != "" && test.expectedServerName != f.tlsConfig.ServerName {
-			t.Errorf("Test %d: expected: %q, actual: %q", i, test.expectedServerName, f.tlsConfig.ServerName)
+		if !test.shouldErr && test.expectedServerName != "" && test.expectedServerName != f.TLSConfig.ServerName {
+			t.Errorf("Test %d: expected: %q, actual: %q", i, test.expectedServerName, f.TLSConfig.ServerName)
 		}
 
 		if !test.shouldErr && test.expectedServerName != "" && test.expectedServerName != f.proxies[0].health.(*dnsHc).c.TLSConfig.ServerName {
@@ -212,8 +212,8 @@ func TestSetupMaxConcurrent(t *testing.T) {
 			}
 		}
 
-		if !test.shouldErr && f.maxConcurrent != test.expectedVal {
-			t.Errorf("Test %d: expected: %d, got: %d", i, test.expectedVal, f.maxConcurrent)
+		if !test.shouldErr && f.MaxConcurrent != test.expectedVal {
+			t.Errorf("Test %d: expected: %d, got: %d", i, test.expectedVal, f.MaxConcurrent)
 		}
 	}
 }
@@ -252,7 +252,7 @@ func TestSetupHealthCheck(t *testing.T) {
 			}
 		}
 		if !test.shouldErr && (f.opts.hcRecursionDesired != test.expectedVal || f.proxies[0].health.GetRecursionDesired() != test.expectedVal) {
-			t.Errorf("Test %d: expected: %t, got: %d", i, test.expectedVal, f.maxConcurrent)
+			t.Errorf("Test %d: expected: %t, got: %d", i, test.expectedVal, f.MaxConcurrent)
 		}
 	}
 }

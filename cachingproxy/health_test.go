@@ -176,7 +176,7 @@ func TestHealthMaxFails(t *testing.T) {
 
 	p := NewProxy(s.Addr, transport.DNS)
 	f := New()
-	f.maxfails = 2
+	f.MaxFails = 2
 	f.SetProxy(p)
 	defer f.OnShutdown()
 
@@ -187,8 +187,8 @@ func TestHealthMaxFails(t *testing.T) {
 
 	time.Sleep(readTimeout + 1*time.Second)
 	fails := atomic.LoadUint32(&p.fails)
-	if !p.Down(f.maxfails) {
-		t.Errorf("Expected Proxy fails to be greater than %d, got %d", f.maxfails, fails)
+	if !p.Down(f.MaxFails) {
+		t.Errorf("Expected Proxy fails to be greater than %d, got %d", f.MaxFails, fails)
 	}
 }
 
@@ -208,7 +208,7 @@ func TestHealthNoMaxFails(t *testing.T) {
 
 	p := NewProxy(s.Addr, transport.DNS)
 	f := New()
-	f.maxfails = 0
+	f.MaxFails = 0
 	f.SetProxy(p)
 	defer f.OnShutdown()
 

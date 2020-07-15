@@ -11,12 +11,12 @@ type Policy interface {
 	String() string
 }
 
-// random is a policy that implements random upstream selection.
-type random struct{}
+// RandomPolicy is a policy that implements RandomPolicy upstream selection.
+type RandomPolicy struct{}
 
-func (r *random) String() string { return "random" }
+func (r *RandomPolicy) String() string { return "random" }
 
-func (r *random) List(p []*Proxy) []*Proxy {
+func (r *RandomPolicy) List(p []*Proxy) []*Proxy {
 	switch len(p) {
 	case 1:
 		return p
@@ -36,14 +36,14 @@ func (r *random) List(p []*Proxy) []*Proxy {
 	return rnd
 }
 
-// roundRobin is a policy that selects hosts based on round robin ordering.
-type roundRobin struct {
+// RoundRobinPolicy is a policy that selects hosts based on round robin ordering.
+type RoundRobinPolicy struct {
 	robin uint32
 }
 
-func (r *roundRobin) String() string { return "round_robin" }
+func (r *RoundRobinPolicy) String() string { return "round_robin" }
 
-func (r *roundRobin) List(p []*Proxy) []*Proxy {
+func (r *RoundRobinPolicy) List(p []*Proxy) []*Proxy {
 	poolLen := uint32(len(p))
 	i := atomic.AddUint32(&r.robin, 1) % poolLen
 
@@ -54,11 +54,11 @@ func (r *roundRobin) List(p []*Proxy) []*Proxy {
 	return robin
 }
 
-// sequential is a policy that selects hosts based on sequential ordering.
-type sequential struct{}
+// SequentialPolicy is a policy that selects hosts based on SequentialPolicy ordering.
+type SequentialPolicy struct{}
 
-func (r *sequential) String() string { return "sequential" }
+func (r *SequentialPolicy) String() string { return "sequential" }
 
-func (r *sequential) List(p []*Proxy) []*Proxy {
+func (r *SequentialPolicy) List(p []*Proxy) []*Proxy {
 	return p
 }
